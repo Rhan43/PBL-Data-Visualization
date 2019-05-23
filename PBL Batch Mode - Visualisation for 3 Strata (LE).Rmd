@@ -1,0 +1,80 @@
+---
+title: "PBL Batch Mode - Visualisation for 3 Strata"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#Packages required to Stratify Data
+library(dplyr)
+library(tidyr)
+
+#Package required for graphing
+library(plotly)
+
+#Import data: This data was generated from PBL Batch Mode using data: MockPUMF2013.csv, and selecting By Row Measures - Life Expectancy.
+LE_df <- read.csv("MockPUMF2013_Calculation_2 - LE by row.csv", header = TRUE)
+
+
+
+###STEP 1: Cleaning the data
+#The first column name was imported incorrectly. This step changes the name back to how it's supposed to be. 
+colnames(LE_df)[colnames(LE_df)=="ï..SMKDSTY"] <- "SMKDSTY"
+
+#Have to change categorical variables in to dummy variables (factors). If they are not changed the graph will be incorrect.
+LE_df$SMKDSTY <- as.factor(LE_df$SMKDSTY)
+LE_df$DHH_SEX <- as.factor(LE_df$DHH_SEX)
+LE_df$EDUDR04 <- as.factor(LE_df$EDUDR04)
+
+#To make life easier I made a dataset with only the columns I needed.
+LE_clean <- LE_df %>%
+  select(SMKDSTY, DHH_SEX, EDUDR04, ByRowLifeExpectancy)
+
+
+
+###STEP 2: Manipulate the data: stratify, calculate the mean, rearrange, and split:
+LE_3 <- LE_clean %>%  
+  group_by(DHH_SEX, SMKDSTY, EDUDR04) %>% #Grouped individuals based on thier levels of Sex, Smoking Status, and Education Level
+  summarise(avg_LE = mean(ByRowLifeExpectancy)) %>% #Calculated the mean LE for each combination of strata levels
+  spread(EDUDR04, avg_LE) #Reformatted data for plotting purposes. Each level of the variable EDUDR04 will now be it's own column and filled with the corresponding LE value. 
+
+
+#In order to plot 3 stratified variables, you need to seperate the data into n subsets where n is the number of levels within one stratified variable.
+#In this example I used the stratified variable: DDH_SEX which has two levels (1-Male, 2-Female). Therefore I seperated the data into two subsets one with only Male data and the other with only Female data
+LE_3_M <- subset(LE_3, DHH_SEX == 1) #Male only
+LE_3_F <- subset(LE_3, DHH_SEX != 1) #Female only
+
+
+
+###STEP 3: Plot data seperately and then together:
+#Created a plot for the Male data. 
+#y=~ education level column (e.g. column 1 corresponds to label Post Secondary Graduate) 
+p3M <- plot_ly(LE_3_M, type='bar', x=~LE_3_M$SMKDSTY, y=~LE_3_M$`1`, name = 'Post-Secondary Graduate') %>%
+  add_trace(LE_3_M, x=~LE_3_M$SMKDSTY, y=~LE_3_M$`2`, name= 'Some Post-Secondary') %>%
+  add_trace(LE_3_M, x=~LE_3_M$SMKDSTY, y=~LE_3_M$`3`, name= 'High SChool Graduate') %>%
+  add_trace(LE_3_M, x=~LE_3_M$SMKDSTY, y=~LE_3_M$`4`, name= 'Less than High School') %>%
+  add_trace(LE_3_M, x=~LE_3_M$SMKDSTY, y=~LE_3_M$`9`, name= 'Missing') %>%
+    layout(xaxis = list(title = 'Smoke Status'), yaxis = list(title= 'Life Expectancy (Years)'), barmode='group')
+p3M
+
+#Created a plot for the Female Data. 
+p3F <- plot_ly(LE_3_F, type='bar', x=~LE_3_F$SMKDSTY, y=~LE_3_F$`1`, name = 'Post-Secondary Graduate') %>%
+  add_trace(LE_3_F, x=~LE_3_F$SMKDSTY, y=~LE_3_F$`2`, name= 'Some Post-Secondary') %>%
+  add_trace(LE_3_F, x=~LE_3_F$SMKDSTY, y=~LE_3_F$`3`, name= 'High School Graduate') %>%
+  add_trace(LE_3_F, x=~LE_3_F$SMKDSTY, y=~LE_3_F$`4`, name= 'Less than High School') %>%
+  add_trace(LE_3_F, x=~LE_3_F$SMKDSTY, y=~LE_3_F$`9`, name= 'Missing') %>%
+    layout(xaxis = list(title = 'Smoke Status'), yaxis = list(title= 'Life Expectancy (Years)'), barmode='group')
+p3F
+
+#Combined Male plot and Female plot
+p3 <- subplot(p3M, p3F, nrows = 1) %>%
+  layout(xaxis = list(title = 'Smoke Status in Males'), 
+         yaxis = list(title= 'Life Expectancy (Years)'),
+         xaxis2 = list(title = 'Smoke Status in Females'))
+p3
+```
