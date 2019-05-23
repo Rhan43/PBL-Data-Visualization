@@ -37,11 +37,10 @@ LE_clean <- LE_df %>%
 
 
 
-###STEP 2: Manipulate the data: stratify, calculate the mean, rearrange, and split:
+###STEP 2: Manipulate the data: stratify, calculate the mean, and split:
 LE_3 <- LE_clean %>%  
   group_by(DHH_SEX, SMKDSTY, EDUDR04) %>% #Grouped individuals based on thier levels of Sex, Smoking Status, and Education Level
-  summarise(avg_LE = mean(ByRowLifeExpectancy)) %>% #Calculated the mean LE for each combination of strata levels
-  spread(EDUDR04, avg_LE) #Reformatted data for plotting purposes. Each level of the variable EDUDR04 will now be it's own column and filled with the corresponding LE value. 
+  summarise(avg_LE = mean(ByRowLifeExpectancy)) #Calculated the mean LE for each combination of strata levels
 
 
 #In order to plot 3 stratified variables, you need to seperate the data into n subsets where n is the number of levels within one stratified variable.
@@ -54,22 +53,19 @@ LE_3_F <- subset(LE_3, DHH_SEX != 1) #Female only
 ###STEP 3: Plot data seperately and then together:
 #Created a plot for the Male data. 
 #y=~ education level column (e.g. column 1 corresponds to label Post Secondary Graduate) 
-p3M <- plot_ly(LE_3_M, type='bar', x=~LE_3_M$SMKDSTY, y=~LE_3_M$`1`, name = 'Post-Secondary Graduate') %>%
-  add_trace(LE_3_M, x=~LE_3_M$SMKDSTY, y=~LE_3_M$`2`, name= 'Some Post-Secondary') %>%
-  add_trace(LE_3_M, x=~LE_3_M$SMKDSTY, y=~LE_3_M$`3`, name= 'High SChool Graduate') %>%
-  add_trace(LE_3_M, x=~LE_3_M$SMKDSTY, y=~LE_3_M$`4`, name= 'Less than High School') %>%
-  add_trace(LE_3_M, x=~LE_3_M$SMKDSTY, y=~LE_3_M$`9`, name= 'Missing') %>%
-    layout(xaxis = list(title = 'Smoke Status'), yaxis = list(title= 'Life Expectancy (Years)'), barmode='group')
+p3M <- LE_3_M %>%
+  arrange(EDUDR04) %>%
+  plot_ly(x=~SMKDSTY, color= ~EDUDR04, legendgroup = ~EDUDR04) %>%
+  add_bars(y=~avg_LE)
 p3M
 
 #Created a plot for the Female Data. 
-p3F <- plot_ly(LE_3_F, type='bar', x=~LE_3_F$SMKDSTY, y=~LE_3_F$`1`, name = 'Post-Secondary Graduate') %>%
-  add_trace(LE_3_F, x=~LE_3_F$SMKDSTY, y=~LE_3_F$`2`, name= 'Some Post-Secondary') %>%
-  add_trace(LE_3_F, x=~LE_3_F$SMKDSTY, y=~LE_3_F$`3`, name= 'High School Graduate') %>%
-  add_trace(LE_3_F, x=~LE_3_F$SMKDSTY, y=~LE_3_F$`4`, name= 'Less than High School') %>%
-  add_trace(LE_3_F, x=~LE_3_F$SMKDSTY, y=~LE_3_F$`9`, name= 'Missing') %>%
-    layout(xaxis = list(title = 'Smoke Status'), yaxis = list(title= 'Life Expectancy (Years)'), barmode='group')
+p3F <- LE_3_F %>%
+  arrange(EDUDR04) %>%
+  plot_ly(x=~SMKDSTY, color= ~EDUDR04, legendgroup = ~EDUDR04) %>%
+  add_bars(y=~avg_LE, showlegend = FALSE)
 p3F
+
 
 #Combined Male plot and Female plot
 p3 <- subplot(p3M, p3F, nrows = 1) %>%
