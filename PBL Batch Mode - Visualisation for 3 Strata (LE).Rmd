@@ -37,7 +37,7 @@ LE_clean <- LE_df %>%
 
 #Renamed the levels in factor variables EDUDR04 and SMKDSTY
 levels(LE_clean$EDUDR04) <- c("Post Secondary", "Some Post Secondary", "High School", "Less then High School", "Missing")
-levels(LE_clean$SMKDSTY) <- c("Daily", "Former daily current occasional", "Never daily current occasional", "Former daily current nonsmoker", "Never daily current smoker (former occasional)", "Never Smoker", "Missing")
+levels(LE_clean$SMKDSTY) <- c("Daily", "Occassional Former Daily", "Always Occassional", "Former Daily", "Former Occasional", "Never", "Missing")
 LE_clean
 
 ###STEP 2: Manipulate the data: stratify, calculate the mean, and split:
@@ -59,30 +59,31 @@ LE_3_F <- subset(LE_3, DHH_SEX != 1) #Female only
 p3M <- LE_3_M %>%
   arrange(EDUDR04) %>%
   plot_ly(x=~SMKDSTY, color= ~EDUDR04, legendgroup = ~EDUDR04) %>%
-  add_bars(y=~avg_LE)
+  add_bars(y=~avg_LE) %>%
+  add_annotations(text = "Years", x = -0.1, xref = 'paper', y = 1, yref = 'paper', showarrow = FALSE)
 p3M
 
 #Created a plot for the Female Data. 
 p3F <- LE_3_F %>%
   arrange(EDUDR04) %>%
   plot_ly(x=~SMKDSTY, color= ~EDUDR04, legendgroup = ~EDUDR04) %>%
-  add_bars(y=~avg_LE, showlegend = FALSE)
+  add_bars(y=~avg_LE, showlegend = FALSE) %>%
+  add_annotations(text = "Years", x = -0.1, xref = 'paper', y = 1, yref = 'paper', showarrow = FALSE)
 p3F
 
 
 #Combined Male plot and Female plot and adjust the axis titles
 p3 <- subplot(p3M, p3F, nrows = 1) %>%
-  layout(xaxis = list(title = 'Smoke Status in Males', 
+  layout(title = "Life Expectancy by Sex, Type of Smoker, and Education",
+         xaxis = list(title = 'Smoke Status in Males', 
                       tickfont=list(family = "Old Standard II, serif", 
                                     size = 10, 
                                     color = "black"), 
-                      tickangle=45), 
-         yaxis = list(title= 'Life Expectancy (Years)'),
+                      tickangle=30), 
          xaxis2 = list(title = 'Smoke Status in Females', 
                        tickfont=list(family = "Old Standard II, serif",
                                      size = 10,
                                      color = "black"), 
-                       tickangle=45),
-          yaxis = list(title= 'Life Expectancy (Years)'))
+                       tickangle=30))
 p3
 ```
